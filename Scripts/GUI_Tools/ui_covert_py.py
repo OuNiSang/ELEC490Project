@@ -5,13 +5,14 @@ import os
 import os.path
 
 #dir of file 
-dir = './GUI_Source'
+dir_ui = './Scripts/UI_Files'
+dir_py = './Scripts/PY_Files'
 
 #list all the .ui file under dir 
 def ListUiFile():
     ls = []
-    files = os.listdir(dir)
-    for filename in files:
+    files = os.listdir(dir_ui)
+    for filename in files: 
         # print(dir + os.sep + filename)
 
         if os.path.splitext(filename)[1] == '.ui':
@@ -27,8 +28,8 @@ def Ui2PyFilename(filename):
 def runMain():
     ls = ListUiFile()
     for uiFile in ls:
-        pyFile = Ui2PyFilename(uiFile)  #TODO still facing error of finding .ui files 
-        cmd = 'pyuic5 {uiFile} > {pyFile} '.format(pyFile = pyFile, uiFile = uiFile)
+        pyFile = Ui2PyFilename(uiFile)  
+        cmd = 'pyuic5 {dir_ui}/{uiFile} > {dir_py}/{pyFile} '.format(pyFile = pyFile, dir_ui = dir_ui, dir_py = dir_py, uiFile = uiFile)
         print(cmd)
         os.system(cmd)
 
