@@ -1,7 +1,8 @@
 import sys
 import json
-import _thread
+import threading
 import time
+import cv2
 
 from PyQt5.QtWidgets    import *
 from PyQt5.QtCore       import *
@@ -10,30 +11,45 @@ from UI_StudentWindow   import Ui_MainWindow
 from Detection          import Detection
 from Video              import Video
 
-class MainWindow(QMainWindow):
+class MainWindow(QMainWindow, Video, Detection, Ui_MainWindow):
     
     #Init main signal 
     sig_start = pyqtSignal()
+    isEnd = False
     
     def __init__(self):
         # Step1 Load ui
         super(MainWindow, self).__init__()
         print("Initiating Main Window")
-        self.ins_ui = Ui_MainWindow()
-        self.ins_ui.setupUi()
+        self.setupUi()
         
-        #Signal and Slot 
-        self.ins_ui.startButton.clicked.connect(self.Sig_Start)
+        # Step Signal and Slot 
+        self.startButton.clicked.connect(self.Sig_Start)
         # self.ins_ui.stopButton.clicked.connect()
         # self.ins_ui.recordButton.clicked.connect()
         
         self.sig_start.connect(self.DetectionStart)
         
-        # Step2 Load Detection
-        self.ins_detection = Detection()
+        # Step Thread 
+        threading.Thread.__init__(self)
+    
+    
+    def VirtualizeCamera(self):
         
-        # Step3 load Video
-        self.ins_video = Video()
+        self.ins_video.CheckCamValid()
+        cap = self.cam
+        with pyvirtualcam.Camera(width=self.w, height=self.h, fps=self.fps, fmt =self.fmt) as virCam:
+            while True:
+                ret_val, frame = cap.read()
+
+                self.frame = cv2.resize(frame, (self.w, self.h), interpolation=cv2.COLOR_BGR2RGB)
+                # cv2.imshow('my webcam', frame)
+                virCam.send(frame)
+                virCam.sleep_until_next_frame()
+            #     if cv2.waitKey(1) == 27:
+            #         break  # esc to quit
+            # cv2.destroyAllWindows()
+        
         
 
     def DetectionStart(self):

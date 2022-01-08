@@ -113,6 +113,7 @@ class Detection():
                 cv2.rectangle(frame, (x1,x1), (x1+w1-20, y1+h1-20), (0,0,0), -1)
                 ## Add text
                 cv2.putText(frame, 'Active', (x1 +int(w1/10), y1+int(h1/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255,0),2)
+           
             if counter > 2:
 
                 x1, y1, w1, h1 = 400,400,400,100

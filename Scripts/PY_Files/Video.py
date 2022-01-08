@@ -7,10 +7,10 @@ class Video():
         self.w = cv2.CAP_PROP_FRAME_WIDTH
         self.h = cv2.CAP_PROP_FRAME_HEIGHT
         self.fps = cv2.CAP_PROP_FPS
+        self.cam = cv2.VideoCapture(0)
+        self.fmt = pyvircam.PixelFormat.BGR
     
     def CheckCamValid(self):
-        try:
-            with pyvircam.Camera(width=self.w, height=self.h, fps=self.fps) as cam:
-                print("Video Camera Valid Check Pass")
-        except:
-            print("ERROR, Check your Camera setting")
+        isValid,frm = self.cam.read()
+        self.cam.release()
+        return isValid
