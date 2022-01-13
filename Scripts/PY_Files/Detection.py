@@ -9,7 +9,7 @@ from playsound import playsound ## alert sound
 from PIL import Image, ImageDraw
 from tensorflow import keras ## for loading in the model
 
-dir_Detection = './DetectionSource'
+dir_Detection = './DetectionSource/'
 
 class Detection():
     
@@ -17,8 +17,10 @@ class Detection():
         self.eye_model = keras.models.load_model(dir_Detection +    '80best.h5')
         self.lip_model = keras.models.load_model(dir_Detection +    '80lip_best.h5')
         
-    def DetectByFrame(frame, w, h, self):
+    def DetectByFrame(self, frame):
         # initiate
+        w = 1024
+        h = 768
         eye = 0
         lip = 0
 
@@ -130,7 +132,7 @@ class Detection():
                 continue
             return frame
         
-    def lip_cropper(frame):
+    def lip_cropper(self, frame):
         facial_features_list = face_recognition.face_landmarks(frame)
         lips = []
         try:
@@ -172,7 +174,7 @@ class Detection():
 
         return image_for_prediction
     
-    def eye_cropper(frame):
+    def eye_cropper(self, frame):
 
         # create a variable for the facial feature coordinates
 
