@@ -7,7 +7,6 @@ import pyvirtualcam
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_Form(object):
   def setupUi(self, Form):
       Form.setObjectName("Form")
@@ -48,20 +47,19 @@ class Ui_Form(object):
       Form.setWindowTitle(_translate("Form", "Form"))
       self.lbl_sourceImage.setText(_translate("Form", ""))
       self.lbl_dealedImage.setText(_translate("Form", ""))
-      self.btn_open.setText(_translate("Form", "打开摄像头"))
-      self.btn_close.setText(_translate("Form", "关闭摄像头"))
-      self.btn_openGarry.setText(_translate("Form", "打开灰度图"))
+      self.btn_open.setText(_translate("Form", "Camera ON"))
+      self.btn_close.setText(_translate("Form", "Camera Off"))
+      self.btn_openGarry.setText(_translate("Form", "Grayscle On"))
 
-#创建新线程
 class DealImgThread(QThread):
-   #设置一个原图像信号，一个灰度转换后的图
+
    singoutSource=pyqtSignal(QImage)
    singoutGarry=pyqtSignal(QImage)
    def __init__(self,parent=None):
        super(DealImgThread,self).__init__(parent)
        self.cv=cv
        self.cvCap=self.cv.VideoCapture(0)
-       #设置灰度转换是否打开
+
        self.garryIsOpen=False
        self.threadIsOpen=True
 
@@ -74,74 +72,84 @@ class DealImgThread(QThread):
 
    def end(self):
        if(self.threadIsOpen):
+           virCam.close()
            self.threadIsOpen=False
 
 
    def run(self):
        self.threadIsOpen=True
        while self.threadIsOpen:
-           with pyvirtualcam.Camera(width=1024, height=768, fps=30, fmt = pyvirtualcam.PixelFormat.BGR ) as cam:
-            ret,frame=self.cvCap.read()
-            outframe = cv.resize(frame, (1024, 768), interpolation=cv.COLOR_BGR2RGB)
-            cam.send(outframe)
-            cam.sleep_until_next_frame()
-            
-            frame=self.cv.flip(frame,1)
-            h,w,ch=frame.shape
-            bytesPerLine=3*w
-            qImg=QImage(frame.data, w, h, bytesPerLine,QImage.Format_RGB888).rgbSwapped()
-            self.singoutSource.emit(qImg)
-            #打开灰度转换功能
-            if(self.garryIsOpen==True):
-                #这里不太知道怎么把QImage转换为灰度图，就用了个折中的办法，先转化为灰度图，再转化为三通道的BGR图
-                garryImg = self.cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-                garryImg=self.cv.cvtColor(garryImg, cv.COLOR_GRAY2BGR)
-                gImg = QImage(garryImg.data, w, h, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-                self.singoutGarry.emit(gImg)
-           self.cv.waitKey(20)
+          
+        ret,frame=self.cvCap.read()
+        outframe = cv.resize(frame, (1024, 768), interpolation=cv.COLOR_BGR2RGB)
+        virCam.send(outframe)
+        virCam.sleep_until_next_frame()
+        
+        frame=self.cv.flip(frame,1)
+        h,w,ch=frame.shape
+        bytesPerLine=3*w
+        qImg=QImage(frame.data, w, h, bytesPerLine,QImage.Format_RGB888).rgbSwapped()
+        self.singoutSource.emit(qImg)
+        #打开灰度转换功能
+        if(self.garryIsOpen==True):
+            #这里不太知道怎么把QImage转换为灰度图，就用了个折中的办法，先转化为灰度图，再转化为三通道的BGR图
+            garryImg = self.cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+            garryImg=self.cv.cvtColor(garryImg, cv.COLOR_GRAY2BGR)
+            gImg = QImage(garryImg.data, w, h, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+            self.singoutGarry.emit(gImg)
+        self.cv.waitKey(30)
 
 
 class MianWindow(QWidget):
-   def __init__(self,parent=None):
+
+    def __init__(self,parent=None):
+       
        super(MianWindow,self).__init__(parent)
        self.ui=Ui_Form()
        self.ui.setupUi(self)
        self.cvThread=DealImgThread()
-       #原始图片信号连接
+
        self.cvThread.singoutSource.connect(self.showImg)
-       #灰度转换后信号连接
+
        self.cvThread.singoutGarry.connect(self.showGarry)
        self.ui.btn_open.clicked.connect(self.openScarme)
        self.ui.btn_openGarry.clicked.connect(self.cvThread.openGarry)
        self.ui.btn_close.clicked.connect(self.cvThread.end)
-       #一般图标在初始化的时候就要设置，要不然后面的显示不了
-       self.setWindowIcon(QIcon(r'ico\Qt.ico'))
-       #线程结束通知
-       self.cvThread.finished.connect(self.CameraThreadIsClose)
 
-   def showImg(self,img):
-       #先取的原来lable的尺寸，然后再转换一下
+       self.setWindowIcon(QIcon(r'ico\Qt.ico'))
+
+       self.cvThread.finished.connect(self.CameraThreadIsClose)
+       
+       
+
+    def showImg(self,img):
+
        temp = self.ui.lbl_sourceImage.size()
        img=img.scaled(temp)
        self.ui.lbl_sourceImage.setPixmap(QPixmap.fromImage(img))
        # now = QDateTime.currentDateTime().toString('hh:mm:ss.zzz')
-       # print(now + ':原图触发！')
 
-   def CameraThreadIsClose(self):
+    def CameraThreadIsClose(self):
+    #    virCam.close() 
        self.msgBox=QMessageBox()
        self.msgBox.setWindowIcon(QIcon(r'ico\Qt.ico'))
-       self.msgBox.information(self,'信息提示框','线程执行结束！！！',buttons=QMessageBox.Yes)
+       self.msgBox.information(self,'Message','Thread Over！！！',buttons=QMessageBox.Yes)
 
-   def openScarme(self):
+    def openScarme(self):
        if(self.cvThread.isRunning()==False):
            self.cvThread.start()
-
-   def showGarry(self,img):
+           global virCam
+           virCam = pyvirtualcam.Camera(width=1024, height=768, fps=30, fmt = pyvirtualcam.PixelFormat.BGR )
+           
+    def __del__(self):
+        print("Disableing camera")
+        # virCam.close()
+        
+    def showGarry(self,img):
        temp = self.ui.lbl_dealedImage.size()
        img=img.scaled(temp)
        self.ui.lbl_dealedImage.setPixmap(QPixmap.fromImage(img))
        # now=QDateTime.currentDateTime().toString('hh:mm:ss.zzz')
-       # print(now+':Garry触发！')
 
 
 if __name__=='__main__':

@@ -1,189 +1,159 @@
 import sys
-import json
-from threading import Thread
-import time
-from tkinter import W
-import cv2
-import numpy as np
-import queue
+from PyQt5.QtCore import Qt, QThread, pyqtSignal,QDateTime
+from PyQt5.QtGui import QIcon,QImage,QPixmap
+from PyQt5.QtWidgets import QDialog, QApplication, QWidget,QMessageBox,QMenu,QLabel,QGraphicsItem
+import cv2 as cv
 import pyvirtualcam      
 
-from PyQt5.QtWidgets    import *
-from PyQt5.QtCore       import *
-from PyQt5.QtGui        import QIcon, QImage, QPixmap
-from UI_StudentWindow   import Ui_MainWindow
-from Detection          import Detection
-from Video              import Video
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+class Ui_Form(object):
+  def setupUi(self, Form):
+      Form.setObjectName("Form")
+      Form.resize(790, 463)
+      self.layoutWidget = QtWidgets.QWidget(Form)
+      self.layoutWidget.setGeometry(QtCore.QRect(20, 10, 751, 331))
+      self.layoutWidget.setObjectName("layoutWidget")
+      self.horizontalLayout = QtWidgets.QHBoxLayout(self.layoutWidget)
+      self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+      self.horizontalLayout.setObjectName("horizontalLayout")
+      self.lbl_sourceImage = QtWidgets.QLabel(self.layoutWidget)
+      self.lbl_sourceImage.setObjectName("lbl_sourceImage")
+      self.horizontalLayout.addWidget(self.lbl_sourceImage)
+      self.lbl_dealedImage = QtWidgets.QLabel(self.layoutWidget)
+      self.lbl_dealedImage.setObjectName("lbl_dealedImage")
+      self.horizontalLayout.addWidget(self.lbl_dealedImage)
+      self.layoutWidget1 = QtWidgets.QWidget(Form)
+      self.layoutWidget1.setGeometry(QtCore.QRect(180, 390, 401, 25))
+      self.layoutWidget1.setObjectName("layoutWidget1")
+      self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.layoutWidget1)
+      self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+      self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+      self.btn_open = QtWidgets.QPushButton(self.layoutWidget1)
+      self.btn_open.setObjectName("btn_open")
+      self.horizontalLayout_2.addWidget(self.btn_open)
+      self.btn_close = QtWidgets.QPushButton(self.layoutWidget1)
+      self.btn_close.setObjectName("btn_close")
+      self.horizontalLayout_2.addWidget(self.btn_close)
+      self.btn_openGarry = QtWidgets.QPushButton(self.layoutWidget1)
+      self.btn_openGarry.setObjectName("btn_openGarry")
+      self.horizontalLayout_2.addWidget(self.btn_openGarry)
+
+      self.retranslateUi(Form)
+      QtCore.QMetaObject.connectSlotsByName(Form)
+
+  def retranslateUi(self, Form):
+      _translate = QtCore.QCoreApplication.translate
+      Form.setWindowTitle(_translate("Form", "Form"))
+      self.lbl_sourceImage.setText(_translate("Form", ""))
+      self.lbl_dealedImage.setText(_translate("Form", ""))
+      self.btn_open.setText(_translate("Form", "Camera ON"))
+      self.btn_close.setText(_translate("Form", "Camera Off"))
+      self.btn_openGarry.setText(_translate("Form", "Grayscle On"))
+
+class DealImgThread(QThread):
+
+   singoutSource=pyqtSignal(QImage)
+   singoutGarry=pyqtSignal(QImage)
+   def __init__(self,parent=None):
+       super(DealImgThread,self).__init__(parent)
+       self.cv=cv
+       self.cvCap=self.cv.VideoCapture(0)
+
+       self.garryIsOpen=False
+       self.threadIsOpen=True
+
+   def openGarry(self):
+       if(self.garryIsOpen==False):
+           self.garryIsOpen=True
+
+   # def start(self):
+   #     self.threadIsOpen=True
+
+   def end(self):
+       if(self.threadIsOpen):
+           virCam.close()
+           self.threadIsOpen=False
 
 
-class EmittingStr(QObject):
-        textWritten = pyqtSignal(str)  #定义一个发送str的信号
-        def write(self, text):
-            self.textWritten.emit(str(text))
- 
+   def run(self):
+       self.threadIsOpen=True
+       while self.threadIsOpen:
+          
+        ret,frame=self.cvCap.read()
+        outframe = cv.resize(frame, (1024, 768), interpolation=cv.COLOR_BGR2RGB)
+        virCam.send(outframe)
+        virCam.sleep_until_next_frame()
+        
+        frame=self.cv.flip(frame,1)
+        h,w,ch=frame.shape
+        bytesPerLine=3*w
+        qImg=QImage(frame.data, w, h, bytesPerLine,QImage.Format_RGB888).rgbSwapped()
+        self.singoutSource.emit(qImg)
+        #打开灰度转换功能
+        if(self.garryIsOpen==True):
+            #这里不太知道怎么把QImage转换为灰度图，就用了个折中的办法，先转化为灰度图，再转化为三通道的BGR图
+            garryImg = self.cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+            garryImg=self.cv.cvtColor(garryImg, cv.COLOR_GRAY2BGR)
+            gImg = QImage(garryImg.data, w, h, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+            self.singoutGarry.emit(gImg)
+        self.cv.waitKey(30)
 
 
-class FrameProduce_Thread(QThread):
-    
-    sig_OutFrame = pyqtSignal(np.ndarray)
-    isProduceFrame = False
-    def __init__(self):
-        super(FrameProduce_Thread, self).__init__()
-        self.video = Video()
-        self.cap = self.video.cam
-        print(self.video.CheckCamValid())
-    
-    # def end(self):
-    #     if(self.isProduceFrame):
-    #         self.isProduceFrame = False
+class MianWindow(QWidget):
 
-    def run(self):
-        # check whether camera is valid
-        self.isProduceFrame = True
-        if not self.video.CheckCamValid():
-            print("Camera is not valid")
-            time.sleep(20)
-            return
-        # Thread to create virtual cam and update it to a buffer 
-        with pyvirtualcam.Camera(width=self.video.w, height=self.video.h, fps=self.video.fps, fmt = self.video.fmt) as cam:
-            while self.isProduceFrame:
-                ret_val, frame = self.cap.read()
+    def __init__(self,parent=None):
+       
+       super(MianWindow,self).__init__(parent)
+       self.ui=Ui_Form()
+       self.ui.setupUi(self)
+       self.cvThread=DealImgThread()
 
-                if ret_val:
-                    frame = cv2.resize(frame, (self.video.w, self.video.h), interpolation=cv2.COLOR_BGR2RGB)
-                    # cv2.imshow('my webcam', frame)
-                    self.sig_OutFrame.emit(frame)
-                    cam.send(frame)
-                    cam.sleep_until_next_frame()
-                else:
-                    print("Cannot open virtual cam")
-                time.sleep(20)
-                
-            print("closing camera...")
-            self.cap.release()
-        self.isProduceFrame = False
-    
+       self.cvThread.singoutSource.connect(self.showImg)
+
+       self.cvThread.singoutGarry.connect(self.showGarry)
+       self.ui.btn_open.clicked.connect(self.openScarme)
+       self.ui.btn_openGarry.clicked.connect(self.cvThread.openGarry)
+       self.ui.btn_close.clicked.connect(self.cvThread.end)
+
+       self.setWindowIcon(QIcon(r'ico\Qt.ico'))
+
+       self.cvThread.finished.connect(self.CameraThreadIsClose)
+       
+       
+
+    def showImg(self,img):
+
+       temp = self.ui.lbl_sourceImage.size()
+       img=img.scaled(temp)
+       self.ui.lbl_sourceImage.setPixmap(QPixmap.fromImage(img))
+       # now = QDateTime.currentDateTime().toString('hh:mm:ss.zzz')
+
+    def CameraThreadIsClose(self):
+    #    virCam.close() 
+       self.msgBox=QMessageBox()
+       self.msgBox.setWindowIcon(QIcon(r'ico\Qt.ico'))
+       self.msgBox.information(self,'Message','Thread Over！！！',buttons=QMessageBox.Yes)
+
+    def openScarme(self):
+       if(self.cvThread.isRunning()==False):
+           self.cvThread.start()
+           global virCam
+           virCam = pyvirtualcam.Camera(width=1024, height=768, fps=30, fmt = pyvirtualcam.PixelFormat.BGR )
+           
+    def __del__(self):
+        print("Disableing camera")
+        # virCam.close()
+        
+    def showGarry(self,img):
+       temp = self.ui.lbl_dealedImage.size()
+       img=img.scaled(temp)
+       self.ui.lbl_dealedImage.setPixmap(QPixmap.fromImage(img))
+       # now=QDateTime.currentDateTime().toString('hh:mm:ss.zzz')
 
 
-class MainWindow(QMainWindow, Video, Detection, Ui_MainWindow):
-    
-    #Init main signal 
-    sig_startCap = pyqtSignal()
-    sig_endCap = pyqtSignal()
-    sig_startDect = pyqtSignal()
-    sig_endDect = pyqtSignal()
-    sig_newFrame = pyqtSignal()
-    
-    #Store all debug message
-    debugMessageLog = []
-    frameBuffer = queue.Queue()
-    
-    def __init__(self):
-        # Step1 Load ui
-        super(MainWindow, self).__init__()
-        print("Initiating Main Window")
-        self.setupUi(self)
-        
-        self.thread_FrameProduce = FrameProduce_Thread()
-        self.isStartedCapture = False
-        self.isStartedDetection = False
-        
-        self.frameCount = 0
-        self.frameStep = 1
-        
-        # Step Signal and Slot 
-        self.startButton.clicked.connect(self.Sig_CaptureStateChange)
-        self.stopButton.clicked.connect(self.Sig_DetetionStateChange)
-        # self.recordButton.clicked.connect()
-        self.sig_startCap.connect(self.CaptureStart)
-        self.sig_endCap.connect(self.CaptureEnd)
-        self.sig_startDect.connect(self.DetectionStart)
-        self.sig_endDect.connect(self.DetectionEnd)
-        self.sig_newFrame.connect(self.DisplayFrame)
-        
-        self.thread_FrameProduce.sig_OutFrame.connect(self.AddFrameBuffer)
-        
-        # Step set terminal output to debug window 
-        sys.stdout = EmittingStr(textWritten=self.PassDebugMessage)
-        sys.stderr = EmittingStr(textWritten=self.PassDebugMessage)
-
-    
-    def AddFrameBuffer(self, img):
-        self.frameCount += 1
-        if (self.frameCount == self.frameStep):
-            if(self.isStartedDetection):
-                img = self.DetectByFrame(img, self.w, self.h)
-            self.frameBuffer.put_nowait(img)
-            self.sig_newFrame.emit()
-        pass
-    
-    def DisplayFrame(self):
-        windowSize = self.videoWidget.size()
-        displayFrame = self.frameBuffer.get_nowait()
-        
-        #step1 convert frame into QImage type 
-        h,w,_ = displayFrame.shape
-        bPerLine = 3 * W
-        displayFrame=QImage(displayFrame.data, w, h, bPerLine,QImage.Format_RGB888).rgbSwapped()
-        
-        #Step2 Display image on videoWidget
-        displayFrame = displayFrame.scaled(windowSize)
-        self.videoWidget.setPixmap(QPixmap.fromImage(displayFrame))
-        pass
-        
-    def CaptureStart(self):
-        print("Capture Start")
-        self.thread_FrameProduce.start()
-        pass
-    
-    def CaptureEnd(self):
-        print("Capture End")
-        self.thread_FrameProduce.quit()
-        pass
-    
-    
-    def DetectionStart(self):
-        print("Detection Start")
-        self.isStartedDetection = True
-        pass
-    
-    def DetectionEnd(self):
-        print("Detection End")
-        self.isStartedDetection = False
-        pass
-            
-        
-    
-    def Sig_CaptureStateChange(self):
-        if not self.isStartedCapture:
-            self.sig_startCap.emit()
-            self.isStartedCapture = True
-        else:
-            self.sig_endCap.emit()
-            self.isStartedCapture = False
-    
-    def Sig_DetetionStateChange(self):
-        if not self.isStartedDetection:
-            self.sig_startDect.emit()
-            self.isStartedDetection = True
-        else:
-            self.sig_endDect.emit()
-            self.isStartedDetection = False
-    
-    def PassDebugMessage(self, message):
-        self.debugMessageLog.append(time.time() + message)
-        self.DebugMessage.append(time.time() + message)
-        
-    def WriteDebugMessage(self, fileName):
-        with open(fileName, 'w') as file:
-            file.writelines(self.debugMessageLog)
-        file.close()
-        
-        
-        
-    
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    mainWindow = MainWindow()
-    mainWindow.show()
-    sys.exit(app.exec_())
+if __name__=='__main__':
+   app = QApplication(sys.argv)
+   form = MianWindow()
+   form.show()
+   sys.exit(app.exec_())
