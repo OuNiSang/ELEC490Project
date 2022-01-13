@@ -4,9 +4,12 @@ import pyvirtualcam as pyvircam
 class Video():
     
     def __init__(self):
-        self.w = cv2.CAP_PROP_FRAME_WIDTH
-        self.h = cv2.CAP_PROP_FRAME_HEIGHT
-        self.fps = cv2.CAP_PROP_FPS
+        # self.w = cv2.CAP_PROP_FRAME_WIDTH
+        # self.h = cv2.CAP_PROP_FRAME_HEIGHT
+        # self.fps = cv2.CAP_PROP_FPS
+        self.w = 1024
+        self.h = 768
+        self.fps = 30
         self.cam = cv2.VideoCapture(0)
         self.fmt = pyvircam.PixelFormat.BGR
     
