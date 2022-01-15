@@ -137,12 +137,12 @@ class DetectionDealingThread(QThread):
     def run(self):
         self.threadIsOpen=True
         while self.threadIsOpen:
-            # print(self.frameBuffer.qsize())
+            print(self.frameBuffer.qsize())
             if (mutex.tryLock(20)):
                 if(self.frameBuffer.not_empty):
                     for num in range(self.frameBuffer.qsize()):
                         detectResult = self.Detector.DetectByFrame(self.frameBuffer.get())
-                        self.sig_detectionOutImg.emit(detectResult)
+                        if detectResult is not None: self.sig_detectionOutImg.emit(detectResult)
                     mutex.unlock()
             cv.waitKey(50)
 
