@@ -1,9 +1,12 @@
+from os import stat
+from sre_parse import State
 import cv2 ## for the webcam and computer vision
 import sys
 import numpy as np 
 import face_recognition ## face recognition
 import matplotlib.pyplot as plt
 import pyvirtualcam as vircam
+import time
 
 from playsound import playsound ## alert sound
 from PIL import Image, ImageDraw
@@ -16,20 +19,24 @@ class Detection():
     def __init__(self):
         self.eye_model = keras.models.load_model(dir_Detection +    '80best.h5')
         self.lip_model = keras.models.load_model(dir_Detection +    '80lip_best.h5')
+        self.eye = 0
+        self.lip = 0
+        self.i = 0
+                
+
         
     def DetectByFrame(self, frame):
         # initiate
         w = 1024
         h = 768
-        eye = 0
-        lip = 0
+        self.i += 1
 
         # set a counter
-
+        
         counter = 0
 
         while True:
-
+            t_start = time.time()
             frame_count = 0
             if frame_count == 0:
                 frame_count += 1
@@ -41,31 +48,34 @@ class Detection():
             # function called on the frame
             image_for_prediction = self.eye_cropper(frame)
             image_for_prediction_lip = self.lip_cropper(frame)
+            t_2 = time.time()
             try:
                 image_for_prediction = np.array(image_for_prediction)
                 image_for_prediction = np.expand_dims(image_for_prediction, axis=0)
                 image_for_prediction_lip = np.array(image_for_prediction_lip)
                 image_for_prediction_lip = np.expand_dims(image_for_prediction_lip, axis=0)
+                # get prediction from model
+                prediction = self.eye_model.predict(image_for_prediction)
+                prediction_lip = self.lip_model.predict(image_for_prediction_lip)
+                prediction = np.argmax(prediction[0], axis=0)
+                prediction_lip = np.argmax(prediction_lip[0], axis=0)
             except:
                 continue
+            t_3 = time.time()
             
-            # get prediction from model
-            prediction = self.eye_model.predict(image_for_prediction)
-            prediction_lip = self.lip_model.predict(image_for_prediction_lip)
-            prediction = np.argmax(prediction[0], axis=0)
-            prediction_lip = np.argmax(prediction_lip[0], axis=0)
             #print(prediction_lip)
+            t_4 = time.time()
             if prediction == 1:
-                eye = eye + 1
+                self.eye += 1
             else: 
-                eye = 0
+                self.eye = 0
             if prediction_lip == 1:
-                lip = lip + 1
+                self.lip += 1
             else: 
-                lip = 0
+                self.lip = 0
             # Based on prediction, display either "Open Eyes" or "Closed Eyes"
 
-            if lip <2 and eye < 5:
+            if self.lip <2 and self.eye < 5:
                 counter = 0
                 status = 'No_Yawn + Eye_Open'
 
@@ -77,7 +87,8 @@ class Detection():
                 cv2.rectangle(frame, (x1,x1), (x1+w1-20, y1+h1-20), (0,0,0), -1)
                 ## Add text
                 cv2.putText(frame, 'Active', (x1 +int(w1/10), y1+int(h1/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255,0),2)
-            elif lip > 2 and eye > 5:
+    
+            elif self.lip > 2 and self.eye > 5:
                 counter = counter + 1
                 status = 'Yawn + Eye_closed'
 
@@ -89,7 +100,8 @@ class Detection():
                 cv2.rectangle(frame, (x1,x1), (x1+w1-20, y1+h1-20), (0,0,0), -1)
                 ## Add text
                 cv2.putText(frame, 'Active', (x1 +int(w1/10), y1+int(h1/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255,0),2)
-            elif lip < 2 and eye > 5:
+
+            elif self.lip < 2 and self.eye > 5:
                 counter = counter + 1
                 status = 'No_Yawn + Eye_closed'
 
@@ -115,7 +127,7 @@ class Detection():
                 cv2.rectangle(frame, (x1,x1), (x1+w1-20, y1+h1-20), (0,0,0), -1)
                 ## Add text
                 cv2.putText(frame, 'Active', (x1 +int(w1/10), y1+int(h1/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255,0),2)
-           
+            t_5 = time.time()
             if counter > 2:
 
                 x1, y1, w1, h1 = 400,400,400,100
@@ -130,7 +142,14 @@ class Detection():
                 #playsound('rooster.mov')
                 counter = 1
                 continue
-            return frame
+            t_6 = time.time()
+            t_crop = t_2 - t_start
+            t_predictRdy = t_3 - t_2
+            t_predict = t_4 - t_3
+            t_classify = t_5 - t_4
+            # print('\r'+"Crop: {0}\t PredicRdy: {1}\t Predict: {2}\t Classify: {3}\t In Status: {4}".format(t_crop, t_predictRdy, t_predict, t_classify, status) ,end=' ')
+            print('\r'+"lip:{0}\t eye:{1}\t status:{2}\t".format(self.lip, self.eye, status), end=' ')
+            return frame    
         
     def lip_cropper(self, frame):
         facial_features_list = face_recognition.face_landmarks(frame)
