@@ -1,4 +1,4 @@
-absl-py==1.0.0
+ipabsl-py==1.0.0
 astunparse==1.6.3
 backcall @ file:///home/conda/feedstock_root/build_artifacts/backcall_1592338393461/work
 backports.functools-lru-cache @ file:///home/conda/feedstock_root/build_artifacts/backports.functools_lru_cache_1618230623929/work
