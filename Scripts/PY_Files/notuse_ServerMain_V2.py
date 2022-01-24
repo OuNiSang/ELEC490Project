@@ -137,7 +137,7 @@ class DetectionDealingThread(QThread):
     def run(self):
         self.threadIsOpen=True
         while self.threadIsOpen:
-            print(self.frameBuffer.qsize())
+            # print(self.frameBuffer.qsize())
             if (mutex.tryLock(20)):
                 if(self.frameBuffer.not_empty):
                     for num in range(self.frameBuffer.qsize()):
@@ -147,7 +147,6 @@ class DetectionDealingThread(QThread):
             cv.waitKey(50)
 
         
-
 class MianWindow(QWidget):
 
     def __init__(self,parent=None):

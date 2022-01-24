@@ -17,11 +17,13 @@ dir_Detection = './DetectionSource/'
 class Detection():
     
     def __init__(self):
-        self.eye_model = keras.models.load_model(dir_Detection +    '80best.h5')
-        self.lip_model = keras.models.load_model(dir_Detection +    '80lip_best.h5')
+        self.eye_model = keras.models.load_model(dir_Detection +    'Version3Eye.h5')
+        self.lip_model = keras.models.load_model(dir_Detection +    'Version2_lip.h5')
         self.eye = 0
         self.lip = 0
         self.i = 0
+        self.rounds = 0
+        self.score = 0
                 
 
         
@@ -69,7 +71,7 @@ class Detection():
                 self.eye += 1
             else: 
                 self.eye = 0
-            if prediction_lip == 1:
+            if prediction_lip == 0:
                 self.lip += 1
             else: 
                 self.lip = 0
@@ -78,6 +80,7 @@ class Detection():
             if self.lip <2 and self.eye < 5:
                 counter = 0
                 status = 'No_Yawn + Eye_Open'
+                self.score +=  3
 
                 #cv2.rectangle(frame, (round(w/2) - 110,20), (round(w/2) + 110, 80), (38,38,38), -1)
 
@@ -91,6 +94,7 @@ class Detection():
             elif self.lip > 2 and self.eye > 5:
                 counter = counter + 1
                 status = 'Yawn + Eye_closed'
+                self.score +=  8
 
                 #cv2.rectangle(frame, (round(w/2) - 110,20), (round(w/2) + 110, 80), (38,38,38), -1)
 
@@ -104,6 +108,7 @@ class Detection():
             elif self.lip < 2 and self.eye > 5:
                 counter = counter + 1
                 status = 'No_Yawn + Eye_closed'
+                self.score +=  5
 
                 #cv2.rectangle(frame, (round(w/2) - 110,20), (round(w/2) + 110, 80), (38,38,38), -1)
 
@@ -118,6 +123,7 @@ class Detection():
             else: 
                 counter = counter + 1
                 status = 'Yawn + Eye_Open'
+                self.score +=  6
 
                 #cv2.rectangle(frame, (round(w/2) - 110,20), (round(w/2) + 110, 80), (38,38,38), -1)
 
@@ -142,13 +148,18 @@ class Detection():
                 #playsound('rooster.mov')
                 counter = 1
                 continue
+            self.rounds +=1 
+            if self.rounds > 20:
+                print("Score is {0}".format(self.score), end=' \n')
+                self.rounds = 0
+                self.score = 0
             t_6 = time.time()
             t_crop = t_2 - t_start
             t_predictRdy = t_3 - t_2
             t_predict = t_4 - t_3
             t_classify = t_5 - t_4
             # print('\r'+"Crop: {0}\t PredicRdy: {1}\t Predict: {2}\t Classify: {3}\t In Status: {4}".format(t_crop, t_predictRdy, t_predict, t_classify, status) ,end=' ')
-            print('\r'+"lip:{0}\t eye:{1}\t status:{2}\t".format(self.lip, self.eye, status), end=' ')
+            print('\r'+"lip:{0}\t eye:{1}\t status:\t{2}\t".format(self.lip, self.eye, status), end='\n')
             return frame    
         
     def lip_cropper(self, frame):
