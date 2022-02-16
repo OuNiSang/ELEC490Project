@@ -84,12 +84,12 @@ class Detection():
 
                 #cv2.rectangle(frame, (round(w/2) - 110,20), (round(w/2) + 110, 80), (38,38,38), -1)
 
-                cv2.putText(frame, status, (round(w/2)-80,70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2, cv2.LINE_4)
-                x1, y1,w1,h1 = 0,0,175,75
-                ## Draw black backgroun rectangle
-                cv2.rectangle(frame, (x1,x1), (x1+w1-20, y1+h1-20), (0,0,0), -1)
-                ## Add text
-                cv2.putText(frame, 'Active', (x1 +int(w1/10), y1+int(h1/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255,0),2)
+                # cv2.putText(frame, status, (round(w/2)-80,70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2, cv2.LINE_4)
+                # x1, y1,w1,h1 = 0,0,175,75
+                # ## Draw black backgroun rectangle
+                # cv2.rectangle(frame, (x1,x1), (x1+w1-20, y1+h1-20), (0,0,0), -1)
+                # ## Add text
+                # cv2.putText(frame, 'Active', (x1 +int(w1/10), y1+int(h1/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255,0),2)
     
             elif self.lip > 2 and self.eye > 5:
                 counter = counter + 1
@@ -98,12 +98,12 @@ class Detection():
 
                 #cv2.rectangle(frame, (round(w/2) - 110,20), (round(w/2) + 110, 80), (38,38,38), -1)
 
-                cv2.putText(frame, status, (round(w/2)-104,70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2, cv2.LINE_4)
-                x1, y1,w1,h1 = 0,0,175,75
-                ## Draw black backgroun rectangle
-                cv2.rectangle(frame, (x1,x1), (x1+w1-20, y1+h1-20), (0,0,0), -1)
-                ## Add text
-                cv2.putText(frame, 'Active', (x1 +int(w1/10), y1+int(h1/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255,0),2)
+                # cv2.putText(frame, status, (round(w/2)-104,70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2, cv2.LINE_4)
+                # x1, y1,w1,h1 = 0,0,175,75
+                # ## Draw black backgroun rectangle
+                # cv2.rectangle(frame, (x1,x1), (x1+w1-20, y1+h1-20), (0,0,0), -1)
+                # ## Add text
+                # cv2.putText(frame, 'Active', (x1 +int(w1/10), y1+int(h1/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255,0),2)
 
             elif self.lip < 2 and self.eye > 5:
                 counter = counter + 1
@@ -112,12 +112,12 @@ class Detection():
 
                 #cv2.rectangle(frame, (round(w/2) - 110,20), (round(w/2) + 110, 80), (38,38,38), -1)
 
-                cv2.putText(frame, status, (round(w/2)-104,70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2, cv2.LINE_4)
-                x1, y1,w1,h1 = 0,0,175,75
-                ## Draw black backgroun rectangle
-                cv2.rectangle(frame, (x1,x1), (x1+w1-20, y1+h1-20), (0,0,0), -1)
-                ## Add text
-                cv2.putText(frame, 'Active', (x1 +int(w1/10), y1+int(h1/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255,0),2)
+                # cv2.putText(frame, status, (round(w/2)-104,70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2, cv2.LINE_4)
+                # x1, y1,w1,h1 = 0,0,175,75
+                # Draw black backgroun rectangle
+                # cv2.rectangle(frame, (x1,x1), (x1+w1-20, y1+h1-20), (0,0,0), -1)
+                # Add text
+                # cv2.putText(frame, 'Active', (x1 +int(w1/10), y1+int(h1/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255,0),2)
 
                 # if the counter is greater than 3, play and show alert that user is asleep
             else: 
@@ -127,23 +127,23 @@ class Detection():
 
                 #cv2.rectangle(frame, (round(w/2) - 110,20), (round(w/2) + 110, 80), (38,38,38), -1)
 
-                cv2.putText(frame, status, (round(w/2)-104,70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2, cv2.LINE_4)
-                x1, y1,w1,h1 = 0,0,175,75
-                ## Draw black backgroun rectangle
-                cv2.rectangle(frame, (x1,x1), (x1+w1-20, y1+h1-20), (0,0,0), -1)
-                ## Add text
-                cv2.putText(frame, 'Active', (x1 +int(w1/10), y1+int(h1/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255,0),2)
+                # cv2.putText(frame, status, (round(w/2)-104,70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2, cv2.LINE_4)
+                # x1, y1,w1,h1 = 0,0,175,75
+                # Draw black backgroun rectangle
+                # cv2.rectangle(frame, (x1,x1), (x1+w1-20, y1+h1-20), (0,0,0), -1)
+                # Add text
+                # cv2.putText(frame, 'Active', (x1 +int(w1/10), y1+int(h1/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255,0),2)
             t_5 = time.time()
             if counter > 2:
 
-                x1, y1, w1, h1 = 400,400,400,100
-
-                cv2.rectangle(frame, (round(w/2) - 160, round(h) - 200), (round(w/2) + 160, round(h) - 120), (0,0,255), -1)
-
-                cv2.putText(frame, 'SLEEPING', (round(w/2)-136,round(h) - 146), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 2, cv2.LINE_4)
-
-                cv2.imshow('Drowsiness Detection', frame)
-                k = cv2.waitKey(1)
+                # x1, y1, w1, h1 = 400,400,400,100
+# 
+                # cv2.rectangle(frame, (round(w/2) - 160, round(h) - 200), (round(w/2) + 160, round(h) - 120), (0,0,255), -1)
+# 
+                # cv2.putText(frame, 'SLEEPING', (round(w/2)-136,round(h) - 146), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 2, cv2.LINE_4)
+# 
+                # cv2.imshow('Drowsiness Detection', frame)
+                # k = cv2.waitKey(1)
                 ## Sound
                 #playsound('rooster.mov')
                 counter = 1
