@@ -6,14 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>398</width>
-    <height>465</height>
+    <width>392</width>
+    <height>437</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
@@ -30,7 +36,11 @@
      <item>
       <layout class="QHBoxLayout" name="videoWidget">
        <item>
-        <widget class="QGraphicsView" name="Video"/>
+        <widget class="QLabel" name="lbl_camOut">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
@@ -43,21 +53,21 @@
         <number>20</number>
        </property>
        <item>
-        <widget class="QPushButton" name="startButton">
+        <widget class="QPushButton" name="btn_open">
          <property name="text">
           <string>Start</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="stopButton">
+        <widget class="QPushButton" name="btn_stop">
          <property name="text">
           <string>Stop</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="recordButton">
+        <widget class="QPushButton" name="btn_detect">
          <property name="text">
           <string>Record</string>
          </property>
@@ -76,24 +86,13 @@
       <height>61</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="DebugWidget">
+    <layout class="QVBoxLayout" name="debugWidget">
      <item>
-      <widget class="QTextBrowser" name="DebugMessage"/>
+      <widget class="QTextBrowser" name="out_debugMessage"/>
      </item>
     </layout>
    </widget>
   </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>398</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources/>
  <connections/>
