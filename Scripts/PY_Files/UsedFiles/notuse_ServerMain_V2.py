@@ -1,21 +1,63 @@
+from asyncio import QueueEmpty
+from queue import Queue
 import queue
 import sys
+from PyQt5.QtCore import Qt, QThread, pyqtSignal,QDateTime,QMutex
+from PyQt5.QtGui import QIcon,QImage,QPixmap
+from PyQt5.QtWidgets import QDialog, QApplication, QWidget,QMessageBox,QMenu,QLabel,QGraphicsItem
 import cv2 as cv
 import pyvirtualcam   
-import numpy as np   
- 
+import numpy as np    
 
-from PyQt5.QtCore       import Qt, QThread, pyqtSignal,QDateTime,QMutex
-from PyQt5.QtGui        import QIcon,QImage,QPixmap
-from PyQt5.QtWidgets    import QDialog, QApplication, QWidget,QMessageBox,QMenu,QLabel,QGraphicsItem
-from PyQt5              import QtCore, QtGui, QtWidgets
-from asyncio            import QueueEmpty
-from queue              import Queue
+from PyQt5 import QtCore, QtGui, QtWidgets
+
 from Detection          import Detection
 from Video              import Video
-from UI_StudentWindow   import Ui_MainWindow
 
 mutex = QMutex()
+class Ui_Form(object):
+    def setupUi(self, Form):
+      Form.setObjectName("Form")
+      Form.resize(790, 463)
+      self.layoutWidget = QtWidgets.QWidget(Form)
+      self.layoutWidget.setGeometry(QtCore.QRect(20, 10, 751, 331))
+      self.layoutWidget.setObjectName("layoutWidget")
+      self.horizontalLayout = QtWidgets.QHBoxLayout(self.layoutWidget)
+      self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+      self.horizontalLayout.setObjectName("horizontalLayout")
+      self.lbl_sourceImage = QtWidgets.QLabel(self.layoutWidget)
+      self.lbl_sourceImage.setObjectName("lbl_sourceImage")
+      self.horizontalLayout.addWidget(self.lbl_sourceImage)
+      self.lbl_dealedImage = QtWidgets.QLabel(self.layoutWidget)
+      self.lbl_dealedImage.setObjectName("lbl_dealedImage")
+      self.horizontalLayout.addWidget(self.lbl_dealedImage)
+      self.layoutWidget1 = QtWidgets.QWidget(Form)
+      self.layoutWidget1.setGeometry(QtCore.QRect(180, 390, 401, 25))
+      self.layoutWidget1.setObjectName("layoutWidget1")
+      self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.layoutWidget1)
+      self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+      self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+      self.btn_open = QtWidgets.QPushButton(self.layoutWidget1)
+      self.btn_open.setObjectName("btn_open")
+      self.horizontalLayout_2.addWidget(self.btn_open)
+      self.btn_close = QtWidgets.QPushButton(self.layoutWidget1)
+      self.btn_close.setObjectName("btn_close")
+      self.horizontalLayout_2.addWidget(self.btn_close)
+      self.btn_openGarry = QtWidgets.QPushButton(self.layoutWidget1)
+      self.btn_openGarry.setObjectName("btn_openGarry")
+      self.horizontalLayout_2.addWidget(self.btn_openGarry)
+
+      self.retranslateUi(Form)
+      QtCore.QMetaObject.connectSlotsByName(Form)
+
+    def retranslateUi(self, Form):
+      _translate = QtCore.QCoreApplication.translate
+      Form.setWindowTitle(_translate("Form", "Form"))
+      self.lbl_sourceImage.setText(_translate("Form", ""))
+      self.lbl_dealedImage.setText(_translate("Form", ""))
+      self.btn_open.setText(_translate("Form", "Camera ON"))
+      self.btn_close.setText(_translate("Form", "Camera Off"))
+      self.btn_openGarry.setText(_translate("Form", "Detection On"))
 
 class FrameCaptureThread(QThread):
 
@@ -64,7 +106,6 @@ class FrameCaptureThread(QThread):
 
         self.cv.waitKey(30)
 
-
 class DetectionDealingThread(QThread):
    
     sig_detectionOutImg = pyqtSignal(np.ndarray)
@@ -110,7 +151,7 @@ class MianWindow(QWidget):
     def __init__(self,parent=None):
        
        super(MianWindow,self).__init__(parent)
-       self.ui= Ui_MainWindow()
+       self.ui=Ui_Form()
        self.ui.setupUi(self)
        self.cvThread=FrameCaptureThread()
        self.detectionThread = DetectionDealingThread()
@@ -123,12 +164,12 @@ class MianWindow(QWidget):
        self.cvThread.sig_outRawFrame.connect(self.detectionThread.LoadImgBuffer)
 
        self.ui.btn_open.clicked.connect(self.openScarme)
-       self.ui.btn_detect.clicked.connect(self.openDetectionScarme)
-       self.ui.btn_detect.clicked.connect(self.cvThread.DetectionOnChange)
-       self.ui.btn_stop.clicked.connect(self.cvThread.end)
-       self.ui.btn_stop.clicked.connect(self.detectionThread.end)
+       self.ui.btn_openGarry.clicked.connect(self.openDetectionScarme)
+       self.ui.btn_openGarry.clicked.connect(self.cvThread.DetectionOnChange)
+       self.ui.btn_close.clicked.connect(self.cvThread.end)
+       self.ui.btn_close.clicked.connect(self.detectionThread.end)
 
-    #    self.setWindowIcon(QIcon(r'ico\Qt.ico'))
+       self.setWindowIcon(QIcon(r'ico\Qt.ico'))
 
        self.cvThread.finished.connect(self.CameraThreadIsClose)
        self.detectionThread.sig_detectionOutImg.connect(self.showDetectionImg)
@@ -138,9 +179,9 @@ class MianWindow(QWidget):
 
     def showRawImg(self,img):
 
-       temp = self.ui.lbl_camOut.size()
+       temp = self.ui.lbl_sourceImage.size()
        img=img.scaled(temp)
-       self.ui.lbl_camOut.setPixmap(QPixmap.fromImage(img))
+       self.ui.lbl_sourceImage.setPixmap(QPixmap.fromImage(img))
        # now = QDateTime.currentDateTime().toString('hh:mm:ss.zzz')
     
     def showDetectionImg(self, img):
@@ -182,6 +223,7 @@ class MianWindow(QWidget):
         self.cvThread.terminate()
         self.detectionThread.terminate()
         
+
 
 if __name__=='__main__':
    app = QApplication(sys.argv)

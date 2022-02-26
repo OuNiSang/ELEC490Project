@@ -9,7 +9,6 @@ s=socket(AF_INET, SOCK_STREAM)
 s.connect((address,port))
 
 
-
 def recv():
     while True:
         recvdata = s.recv(buffsize).decode('utf-8')

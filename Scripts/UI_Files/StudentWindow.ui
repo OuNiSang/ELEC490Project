@@ -38,7 +38,10 @@
        <item>
         <widget class="QLabel" name="lbl_camOut">
          <property name="text">
-          <string/>
+          <string>Wait For Image, Click &quot;Start&quot;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -67,9 +70,9 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="btn_detect">
+        <widget class="QPushButton" name="btn_connect">
          <property name="text">
-          <string>Record</string>
+          <string>Connect</string>
          </property>
         </widget>
        </item>
@@ -88,11 +91,19 @@
     </property>
     <layout class="QVBoxLayout" name="debugWidget">
      <item>
-      <widget class="QTextBrowser" name="out_debugMessage"/>
+      <widget class="QLabel" name="lbl_Status">
+       <property name="text">
+        <string>Wait For Score...</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
   </widget>
+  <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <resources/>
  <connections/>
