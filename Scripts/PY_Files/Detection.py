@@ -20,6 +20,8 @@ class Detection():
         self.eye_model = keras.models.load_model(dir_Detection +    'Version3Eye.h5')
         self.lip_model = keras.models.load_model(dir_Detection +    'Version2_lip.h5')
         self.i = 0
+        self.eye = 0
+        self.lip = 0
         self.score = 0
                 
 
@@ -29,60 +31,62 @@ class Detection():
         w = 1024
         h = 768
         self.score = 0
-        isMouseOpen = False
-        isEyeOpen = False
 
         t_start = time.time()
 
         # function called on the frame
-        image_for_prediction = self.eye_cropper(frame)
-        image_for_prediction_lip = self.lip_cropper(frame)
         t_2 = time.time()
         try:
+            image_for_prediction = self.eye_cropper(frame)
+            image_for_prediction_lip = self.lip_cropper(frame)
             image_for_prediction = np.array(image_for_prediction)
             image_for_prediction = np.expand_dims(image_for_prediction, axis=0)
             image_for_prediction_lip = np.array(image_for_prediction_lip)
             image_for_prediction_lip = np.expand_dims(image_for_prediction_lip, axis=0)
-            # get prediction from model
             prediction = self.eye_model.predict(image_for_prediction)
             prediction_lip = self.lip_model.predict(image_for_prediction_lip)
             prediction = np.argmax(prediction[0], axis=0)
             prediction_lip = np.argmax(prediction_lip[0], axis=0)
         except:
             print("Not detected")
+            prediction = 1
+            prediction_lip = 1
         t_3 = time.time()
-        
-        #print(prediction_lip)
-        t_4 = time.time()
-        if prediction == 1:
-            isEyeOpen = True
-        if prediction_lip == 0:
-            isMouseOpen = True
-            
+
         # Based on prediction, display either "Open Eyes" or "Closed Eyes"
 
-        if not isMouseOpen and isEyeOpen:
-
-            status = 'No_Yawn + Eye_Open'
-            self.score =  5
-
-        elif isMouseOpen > 2 and not isEyeOpen:
-            status = 'Yawn + Eye_closed'
-            self.score =  1
-
-        elif isMouseOpen < 2 and isEyeOpen > 5:
-            status = 'No_Yawn + Eye_closed'
-            self.score =  4
+        if prediction == 1:
+            self.eye += 1
         else: 
-            status = 'Yawn + Eye_Open'
-            self.score =  2
-        t_5 = time.time()
+            self.eye = 0
+        if prediction_lip == 0:
+            self.lip += 1
+        else: 
+            self.lip = 0
+        # Based on prediction, display either "Open Eyes" or "Closed Eyes"
+        try:
+            if self.lip <2 and self.eye < 5:
+                status = 'No_Yawn + Eye_Open'
+                self.score -=  0.1
+
+            elif self.lip > 2 and self.eye > 5:
+                status = 'Yawn + Eye_closed'
+                self.score -= 5
+
+            elif self.lip < 2 and self.eye > 5:
+                status = 'No_Yawn + Eye_closed'
+                self.score -= 4
+
+            else: 
+                status = 'Yawn + Eye_Open'
+                self.score -= 3
+
+        except:
+            print("Detection Failed")
         
-        t_crop = t_2 - t_start
-        t_predictRdy = t_3 - t_2
-        t_predict = t_4 - t_3
-        t_classify = t_5 - t_4
-        # print('\r'+"Crop: {0}\t PredicRdy: {1}\t Predict: {2}\t Classify: {3}\t In Status: {4}".format(t_crop, t_predictRdy, t_predict, t_classify, status) ,end=' ')
+        # t_crop = t_2 - t_start
+        # t_predictRdy = t_3 - t_2
+        # print('\r'+"Crop: {0}\t PredicRdy: {1}\t In Status: {2}".format(t_crop, t_predictRdy, status) ,end=' ')
         # print('\r'+"lip:{0}\t eye:{1}\t status:\t{2}\t".format(isMouseOpen, isEyeOpen, status), end='\n')
         # return frame   
         return self.score 
