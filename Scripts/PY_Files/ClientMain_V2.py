@@ -207,9 +207,13 @@ class MianWindow(QtWidgets.QMainWindow):
         
         self.ui.lbl_Status.setText("Score = {0}".format(score))
         print("Score:",score)
+        #TODO: sending result to the server 
         if self.isConnect:
             self.s.mysend(score)
-        
+            
+        #TODO: add sound warning 
+        #TODO: setup text for score indication 
+        #TODO: store the score 
         if score > SCORE_GOOD:
             self.ui.lbl_Status.setPixmap(self.img_Good)
             return
