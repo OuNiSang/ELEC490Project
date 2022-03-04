@@ -1,15 +1,9 @@
-from os import stat
-from sre_parse import State
 import cv2 ## for the webcam and computer vision
-import sys
 import numpy as np 
 import face_recognition ## face recognition
-import matplotlib.pyplot as plt
-import pyvirtualcam as vircam
 import time
 
 from playsound import playsound ## alert sound
-from PIL import Image, ImageDraw
 from tensorflow import keras ## for loading in the model
 
 dir_Detection = './DetectionSource/'

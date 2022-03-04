@@ -1,7 +1,6 @@
 import queue
 import sys
 import cv2 as cv
-from cv2 import add
 import pyvirtualcam   
 import numpy as np   
  
@@ -13,6 +12,7 @@ from PyQt5              import QtCore, QtGui, QtWidgets
 from asyncio            import QueueEmpty
 from queue              import Queue
 from Detection          import Detection
+from Scripts.PY_Files.ServerMain import MainWindow
 from Video              import Video
 from UI_StudentWindow   import Ui_MainWindow
 from MySocket           import MySocket
@@ -32,15 +32,14 @@ class FrameCaptureThread(QThread):
        self.cv=cv
        self.cvCap=self.cv.VideoCapture(0)
 
-       self.garryIsOpen=False
-       self.threadIsOpen=True
+       self.isThreadOpen=True
        self.isDetectionOn = False
 
 
     def end(self):
-       if(self.threadIsOpen):
+       if(self.isThreadOpen):
            virCam.close()
-           self.threadIsOpen=   False
+           self.isThreadOpen=   False
            self.isDetectionOn = False
 
     def DetectionOnChange(self):
@@ -49,8 +48,8 @@ class FrameCaptureThread(QThread):
         # print(self.isDetectionOn)
 
     def run(self):
-       self.threadIsOpen=True
-       while self.threadIsOpen:
+       self.isThreadOpen=True
+       while self.isThreadOpen:
           
         ret,frame=self.cvCap.read()
         outframe = cv.resize(frame, (1024, 768), interpolation=cv.COLOR_BGR2RGB)
@@ -80,7 +79,7 @@ class DetectionDealingThread(QThread):
         self.bufferSize = 20                #Send for every 20 frame
         self.frameBuffer = queue.Queue(self.bufferSize)
 
-        self.threadIsOpen=True
+        self.isThreadOpen=True
 
     def LoadImgBuffer(self,img):
         if (self.frameBuffer.not_full):
@@ -91,16 +90,16 @@ class DetectionDealingThread(QThread):
             print("Frame Buffer is full")
         
     def end(self):
-        if(self.threadIsOpen):
+        if(self.isThreadOpen):
            virCam.close()
-           self.threadIsOpen=False
+           self.isThreadOpen=False
 
 
     def run(self):
-        self.threadIsOpen=True
+        self.isThreadOpen=True
         _cnt = 0
         detectResult = 100
-        while self.threadIsOpen:
+        while self.isThreadOpen:
             # print(self.frameBuffer.qsize())
             if(_cnt == 0):
                 detectResult = 100
@@ -228,8 +227,14 @@ class MianWindow(QtWidgets.QMainWindow):
     def __del__(self):
         print("Disableing camera")
         virCam.close()
-        self.captureThread.terminate()
-        self.detectionThread.terminate()
+        if self.captureThread.isRunning():
+            self.captureThread.quit()
+        if self.detectionThread.isRunning():
+            self.detectionThread.quit()
+            
+        del self.captureThread
+        del self.detectionThread
+        
         
 
 if __name__=='__main__':

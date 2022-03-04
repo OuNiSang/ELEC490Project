@@ -9,6 +9,7 @@ s=socket(AF_INET, SOCK_STREAM)
 s.connect((address,port))
 
 
+
 def recv():
     while True:
         recvdata = s.recv(buffsize).decode('utf-8')
@@ -22,7 +23,7 @@ class GUI:
         self.listBox.pack()
         self.entry = Entry(self.root)
         self.entry.pack()
-        self.sendBtn = Button(self.root, text='发送', command=self.send)
+        self.sendBtn = Button(self.root, text='SEND', command=self.send)
         self.sendBtn.pack()
 
     def send(self):
@@ -33,7 +34,7 @@ def createGUI():
     global gui
     root = Tk()
     gui = GUI(root)
-    root.title('客户端')
+    root.title('Client Text')
     root.mainloop()
 
 if __name__ == '__main__':
