@@ -19,21 +19,7 @@ class MySocket:
         self.s.connect((host, int(port)))
 
     def mysend(self, msg):
-        totalsent = 0
-        while totalsent < MSGLEN:
-            sent = self.s.send(msg[totalsent:])
-            if sent == 0:
-                raise RuntimeError("socket connection broken")
-            totalsent = totalsent + sent
+        sent = self.s.send(msg.encode())
+        if sent == 0:
+            raise RuntimeError("socket connection broken")
 
-    def myreceive(self):
-        chunks = []
-        bytes_recd = 0
-        while bytes_recd < MSGLEN:
-            chunk = self.s.recv(min(MSGLEN - bytes_recd, 2048))
-            if chunk == b'':
-                raise RuntimeError("socket connection broken")
-            chunks.append(chunk)
-            bytes_recd = bytes_recd + len(chunk)
-        return b''.join(chunks)
-    

@@ -9,10 +9,7 @@ from PyQt5.QtCore       import Qt, QThread, pyqtSignal,QDateTime,QMutex
 from PyQt5.QtGui        import QIcon,QImage,QPixmap
 from PyQt5.QtWidgets    import QDialog, QApplication, QWidget,QMessageBox,QMenu,QLabel,QGraphicsItem
 from PyQt5              import QtCore, QtGui, QtWidgets
-from asyncio            import QueueEmpty
-from queue              import Queue
 from Detection          import Detection
-from Scripts.PY_Files.ServerMain import MainWindow
 from Video              import Video
 from UI_StudentWindow   import Ui_MainWindow
 from MySocket           import MySocket
@@ -114,8 +111,7 @@ class DetectionDealingThread(QThread):
                             _cnt = 0
                     mutex.unlock()
             cv.waitKey(50)
-           
-           
+                  
 class MianWindow(QtWidgets.QMainWindow):
 
     def __init__(self,parent=None):
@@ -137,9 +133,7 @@ class MianWindow(QtWidgets.QMainWindow):
 
        self.ui.btn_open.clicked.connect(self.OpenScarme)
        self.ui.btn_open.clicked.connect(self.captureThread.DetectionOnChange)
-       self.ui.btn_stop.clicked.connect(self.captureThread.end)
-       self.ui.btn_stop.clicked.connect(self.detectionThread.end)
-       self.ui.btn_stop.clicked.connect(self.CloseCamera)
+       self.ui.btn_stop.clicked.connect(self.OpenStoped)
        self.ui.btn_connect.clicked.connect(self.OpenConnect)
        
        self.img_Good = QPixmap(IMG_GOOD)
@@ -153,35 +147,24 @@ class MianWindow(QtWidgets.QMainWindow):
         
     def OpenConnect(self):
         if not self.isConnect:
-            while not self.isConnect:
-                # print("Do not have Server info")
-                addr,r = QtWidgets.QInputDialog().getText(self, "Input Host IPV4 Adress",
-                                                        "Adress: Like \"127.0.0.1 \" ",
-                                                        QtWidgets.QLineEdit.Normal,
-                                                        QtCore.QDir.home().dirName())
-                if not r:
-                    return
-                port,r = QtWidgets.QInputDialog().getText(self, "Input Host IPV4 Adress's port",
-                                                        "Port: Like \"80 \" ",
-                                                        QtWidgets.QLineEdit.Normal,
-                                                        QtCore.QDir.home().dirName())
-                if not r:
-                    return
-                # print(addr, port)
-                try:
-                    self.s.connect(addr, port)
-                except:
-                    reply = QMessageBox.warning(self,"Warning",
-                                                           "Cannot connect to the server: {0} {1}\n Retry?".format(addr, port),
-                                                           QMessageBox.Yes | QMessageBox.No)
-                    if reply == QMessageBox.No:
-                        return
-            self.isConnect = True
+            _check = self.SetupConnection()
+            if not _check:
+                return
+            
         else:
             try:
                 self.s.s.close()
+                self.isConnect = False
             except:
                 return
+    
+    def OpenStoped(self):
+        
+        self.detectionThread.end()
+        self.captureThread.end()
+        self.s.s.close()
+        self.isConnect = False
+        self.CloseCamera()
     
     def OpenScarme(self):
        if(self.captureThread.isRunning()==False):
@@ -193,6 +176,34 @@ class MianWindow(QtWidgets.QMainWindow):
            if not self.detectionThread.isRunning():
                 print("Detection Start")
                 self.detectionThread.start()
+                
+    def SetupConnection(self):
+        while not self.isConnect:
+            print("Enter Your Host IP")
+            self.addr,r = QtWidgets.QInputDialog().getText(self, "Input Your Host IPV4 Adress",
+                                                    "Adress: Like \"127.0.0.1 \" ",
+                                                    QtWidgets.QLineEdit.Normal,
+                                                    QtCore.QDir.home().dirName())
+            if not r:
+                return False
+            self.port,r = QtWidgets.QInputDialog().getText(self, "Input Your Host IPV4 Adress's port",
+                                                    "Port: Like \"80 \" ",
+                                                    QtWidgets.QLineEdit.Normal,
+                                                    QtCore.QDir.home().dirName())
+            if not r:
+                return False
+            try:
+              print("Try:",self.addr, self.port)
+              self.s.connect(self.addr, self.port)
+              print("Connected!!")
+            except:
+                reply = QMessageBox.warning(self,"Warning",
+                                                        "Cannot connect to the Host server: {0} {1}\n Retry?".format(self.addr, self.port),
+                                                        QMessageBox.Yes | QMessageBox.No)
+                if reply == QMessageBox.No:
+                    return False
+            self.isConnect = True
+        return True
                 
     
     def ShowRawImg(self,img):
@@ -206,9 +217,11 @@ class MianWindow(QtWidgets.QMainWindow):
         
         self.ui.lbl_Status.setText("Score = {0}".format(score))
         print("Score:",score)
+        
         #TODO: sending result to the server 
         if self.isConnect:
-            self.s.mysend(score)
+            print("Try Sending...")
+            self.s.mysend(str(score))
             
         #TODO: add sound warning 
         #TODO: setup text for score indication 
@@ -217,6 +230,7 @@ class MianWindow(QtWidgets.QMainWindow):
             self.ui.lbl_Status.setPixmap(self.img_Good)
             return
         self.ui.lbl_Status.setPixmap(self.img_Bad)
+
            
     def CloseCamera(self):
     #    virCam.close() 
@@ -237,8 +251,8 @@ class MianWindow(QtWidgets.QMainWindow):
         
         
 
-if __name__=='__main__':
-   app = QApplication(sys.argv)
-   form = MianWindow()
-   form.show()
-   sys.exit(app.exec_())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    form = MianWindow()
+    form.show()
+    sys.exit(app.exec_())

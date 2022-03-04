@@ -6,7 +6,7 @@ import time
 from playsound import playsound ## alert sound
 from tensorflow import keras ## for loading in the model
 
-dir_Detection = './DetectionSource/'
+dir_Detection = './Model/'
 
 class Detection():
     

@@ -1,5 +1,6 @@
 import sys
 import cv2 as cv
+from cv2 import isContourConvex
 import numpy as np  
 import time 
 import threading
@@ -40,13 +41,14 @@ class PltThread(QThread):
         # print(self.list_localTime)
         # format data
         _numOfShownData = 10
-        _dx, _dy = self.FormatData(_numOfShownData)
-        _currentScore = _dy[floor(_numOfShownData/2)]
+        _dx = gui.list_time.copy()
+        _dy = gui.list_score.copy()
+        _currentScore = _dy[len(_dy)-1]
         
         # format axis
-        gui.score_canvas_ax.set(xlim=[max(0,self.list_localTime - self.UpdateSec*(_numOfShownData/2)), 
-                                      self.list_localTime + self.UpdateSec*(_numOfShownData/2)]
-                                , ylim=[_currentScore - 20,_currentScore + 20])
+        gui.score_canvas_ax.set(xlim=[max(0,self.list_localTime - self.UpdateSec*3*(_numOfShownData/2)), 
+                                      self.list_localTime + self.UpdateSec*3*(_numOfShownData/2)]
+                                , ylim=[ max(-10, _currentScore - 70) , min(110, _currentScore + 80)])
                 
         # use PLT to output image 
         gui.score_canvas_line.set_data(_dx, _dy)
@@ -60,38 +62,6 @@ class PltThread(QThread):
             self._timer.add_callback(self.ShowScorePltAndCurrentScore)
             self._timer.start()
 
-        
-    def FormatData(self, num=10):
-        _dx = []
-        _dy = []
-        _len = len(gui.list_score)
-        _cnt = _len - 1
-        _center = floor(num/2)
-        for i in range(num):
-            if i < _center:
-                _find = False
-                tmpT = self.list_localTime - self.UpdateSec * (_center - i)
-                
-                while not _find: 
-                    if (_cnt<0):
-                        _find = True
-                        _cnt = 0
-                    try:
-                        if(tmpT > gui.list_time[_cnt]):
-                            _cnt-=1
-                        else:
-                            _find = True
-                    except:
-                        _find = True
-                # print("_cnt:",_cnt)
-                tmpS = gui.list_score[_cnt]
-                
-                _dx.append(tmpT)
-                _dy.append(tmpS)
-            else:       #The down half should be nothing 
-                _dx.append(self.list_localTime + self.UpdateSec * i)
-                _dy.append(gui.list_score[_len-1])
-        return _dx,_dy
         
     def end(self):
         if(self.isThreadOpen):
@@ -113,8 +83,14 @@ class ScoreThread(QThread):
         self.currentScoreNum = 0
         self.currentScore = 0
         self.avgScore = 0
+        self.isCalculating = False
+    
+    def ChangeCalculationState(self):
+        self.isCalculating = not self.isCalculating
     
     def LoadScore(self, score):
+        if not self.isCalculating:
+            return
         try:
             if(mutex.tryLock(5)):
                 self.currentScore += float(score)
@@ -152,7 +128,7 @@ class ScoreThread(QThread):
     def run(self):
         self.isThreadOpen = True
         while self.isThreadOpen:
-            if self.currentScoreNum < self.numClient or self.numClient == 0:
+            if self.currentScoreNum < self.numClient or self.numClient == 0 or not self.isCalculating:
                 # print("n")
                 continue
             print("t",self.currentScoreNum,self.numClient)
@@ -227,6 +203,8 @@ def TcpLinkThread(clientsock, clientaddress):
         
 class MainWindow(QtWidgets.QMainWindow):
     
+    sig_isCalandPlt = pyqtSignal()
+    
     def __init__(self, parent = None):
         super(MainWindow, self).__init__(parent)
         self.ui = Ui_MainWindow()
@@ -256,6 +234,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.socketThread.sig_ClientConnect.connect(self.ShowUpdateClientList)
         self.socketThread.sig_ClientClose.connect(self.scoreThread.subC)
         self.socketThread.sig_ClientClose.connect(self.ShowUpdateClientList)
+        self.sig_isCalandPlt.connect(self.scoreThread.ChangeCalculationState)
+        self.sig_isCalandPlt.connect(self.pltThread.ChangePltState)
         
         self.score_canvas = FigureCanvas(Figure())
         self.ui.layout_totalScore.addWidget(self.score_canvas)
@@ -290,6 +270,7 @@ class MainWindow(QtWidgets.QMainWindow):
     
     def OpenPause(self):
         #TODO Stop Score Thread calculating final result 
+        self.sig_isCalandPlt.emit()
         pass 
     
     def OpenConnect(self):
@@ -313,7 +294,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.list_time.append(time.time() - self.startTime)
             
             #Start Plting socre 
-            self.pltThread.ChangePltState()
+            self.sig_isCalandPlt.emit()
             
         else:
             try:
@@ -322,12 +303,17 @@ class MainWindow(QtWidgets.QMainWindow):
                                             QMessageBox.Yes | QMessageBox.No)
                 if reply == QMessageBox.No:
                     return
-                #TODO close the host 
+                # close the host 
                 self.totalTime = time.time() - self.startTime
                 try:
                     self.socketThread.terminate()
-                    self.pltThread.ChangePltState()
+                    self.sig_isCalandPlt.emit()
                     self.isConnect = False
+                    
+                    _avgScore = np.mean(self.list_score)
+                    _msg = "Finshed, the total connection time is {0}, with average score of {1}".format(self.totalTime, _avgScore)
+                    self.ui.text_currentScore.append(str(_msg))
+                    
                 except:
                     print("socket thread termination Error")
             except:
@@ -345,9 +331,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.list_score.append(score)
         self.list_time.append(_time)
         print("Host get total avg score:{0} in time {1}".format(score,_time))
+        
+        _msg = "AVG Performace: {0}".format(score)
+        self.ui.text_currentScore.append(str(_msg))
     
-    def UpdateCurrentScoreBoard(self, score):
-        pass
+
             
     def SetupConnection(self):
         while not self.isConnect:
