@@ -104,10 +104,12 @@ class DetectionDealingThread(QThread):
                 if(self.frameBuffer.not_empty):
                     for num in range(self.frameBuffer.qsize()):
                         detectResult += self.Detector.DetectByFrame(self.frameBuffer.get())
+                        print("size",self.frameBuffer.qsize(),_cnt,detectResult)
                         _cnt += 1
                         if detectResult is not None and _cnt >= self.bufferSize: 
+                            print(detectResult)
                             self.sig_detectionOutResult.emit(max(detectResult, 0.0))
-                            detectResult = 0
+                            detectResult = 100
                             _cnt = 0
                     mutex.unlock()
             cv.waitKey(50)
