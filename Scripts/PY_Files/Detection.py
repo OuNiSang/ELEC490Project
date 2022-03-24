@@ -65,15 +65,15 @@ class Detection():
 
             elif self.lip > 2 and self.eye > 5:
                 status = 'Yawn + Eye_closed'
-                self.score -= 5
+                self.score -= 5*2*2
 
             elif self.lip < 2 and self.eye > 5:
                 status = 'No_Yawn + Eye_closed'
-                self.score -= 4
+                self.score -= 4*2*2
 
             else: 
                 status = 'Yawn + Eye_Open'
-                self.score -= 3
+                self.score -= 3*2*2
 
         except:
             print("Detection Failed")

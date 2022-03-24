@@ -73,7 +73,7 @@ class DetectionDealingThread(QThread):
         self.cv=cv
         self.cvCap=self.cv.VideoCapture(0)
         self.Detector = Detection() 
-        self.bufferSize = 20                #Send for every 20 frame
+        self.bufferSize = 5                #Send for every 20 frame
         self.frameBuffer = queue.Queue(self.bufferSize)
 
         self.isThreadOpen=True
@@ -111,6 +111,11 @@ class DetectionDealingThread(QThread):
                             self.sig_detectionOutResult.emit(max(detectResult, 0.0))
                             detectResult = 100
                             _cnt = 0
+                            break
+                    if(not self.frameBuffer.empty()):
+                        print("CLEAR")
+                        self.frameBuffer.queue.clear()
+                    
                     mutex.unlock()
             cv.waitKey(50)
                   
